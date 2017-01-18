@@ -143,9 +143,9 @@ class Company(models.Model):
     name = models.CharField('Name', blank=True, null=True, max_length=144)
     type = models.CharField('Type', blank=True, null=True, max_length=6)
 
-    main_activity = models.ManyToManyField(Activity, related_name='main')
-    secondary_activity = models.ManyToManyField(Activity, related_name='secondary')
-
+    main_activity = JSONField('main_activity', blank=True, null=True)
+    secondary_activity = JSONField('secondary_activity', blank=True, null=True)
+    
     status = models.CharField('Status', blank=True, null=True, max_length=5)
     situation = models.CharField('Situation', blank=True, null=True, max_length=8)
     situation_reason = models.CharField('Situation reason', blank=True, null=True, max_length=44)
