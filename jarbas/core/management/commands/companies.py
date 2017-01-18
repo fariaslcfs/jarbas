@@ -37,7 +37,11 @@ class Command(LoadCommand):
 
                 filtered = {k: v for k, v in row.items() if k in keys}
                 filtered['main_activity'] = [main]
-                filtered['secondary_activity'] = [secondary]
+                
+                if len(secondary) == 0:
+                    filtered['secondary_activity'] = []
+                else:
+                    filtered['secondary_activity'] = [secondary]
                 obj = Company.objects.create(**self.serialize(filtered))
                 
                 obj.save()
