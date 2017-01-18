@@ -1,6 +1,5 @@
 import csv
 import lzma
-import json
 
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
