@@ -71,7 +71,7 @@ class TestConventionMethods(TestCommand):
     @patch('jarbas.core.management.commands.companies.Command.print_count')
     def test_handler_without_options(self, print_count, save_companies, drop_all, print_):
         print_count.return_value = 0
-        self.command.handle(dataset='companies.xz')
+        self.command.handle(dataset='companies.xz', batch_size=42)
         print_.assert_called_with('Starting with 0 companies')
         self.assertEqual(1, save_companies.call_count)
         self.assertEqual(1, print_count.call_count)
@@ -84,7 +84,7 @@ class TestConventionMethods(TestCommand):
     @patch('jarbas.core.management.commands.companies.Command.print_count')
     def test_handler_with_options(self, print_count, save_companies, drop_all, print_):
         print_count.return_value = 0
-        self.command.handle(dataset='companies.xz', drop=True)
+        self.command.handle(dataset='companies.xz',batch_size=42,drop=True)
         print_.assert_called_with('Starting with 0 companies')
         self.assertEqual(2, drop_all.call_count)
         self.assertEqual(1, save_companies.call_count)
