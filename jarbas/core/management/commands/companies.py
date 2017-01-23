@@ -42,7 +42,7 @@ class Command(LoadCommand):
         keys = list(f.name for f in Company._meta.fields if f not in skip)
         with lzma.open(self.path, mode='rt') as file_handler:
             for row in csv.DictReader(file_handler): 
-                main, secondary = self.save_activities(row)
+                main, secondary = self.return_activities(row)
                 
                 filtered = {k: v for k, v in row.items() if k in keys}
                 filtered['main_activity'] = [main]
@@ -54,7 +54,7 @@ class Command(LoadCommand):
                 obj = Company(**self.serialize(filtered))
                 yield obj
                  
-    def save_activities(self, row):
+    def return_activities(self, row):
         data = dict(
             code=row['main_activity_code'],
             description=row['main_activity']

@@ -59,9 +59,6 @@ class TestCreate(TestCommand):
         self.command.path = 'companies.xz'
         self.command.save_companies()
         create.assert_called_with(ahoy=42)
-        #create.return_value.main_activity.add.assert_called_with(3)
-        #self.assertEqual(2, create.return_value.secondary_activity.add.call_count)
-
 
 class TestConventionMethods(TestCommand):
 
@@ -76,7 +73,7 @@ class TestConventionMethods(TestCommand):
         self.assertEqual(1, save_companies.call_count)
         self.assertEqual(1, print_count.call_count)
         self.assertEqual('companies.xz', self.command.path)
-        #drop_all.assert_not_called()
+        drop_all.assert_not_called()
 
     @patch('jarbas.core.management.commands.companies.print')
     @patch('jarbas.core.management.commands.companies.Command.drop_all')
