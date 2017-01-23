@@ -24,7 +24,6 @@ class Command(LoadCommand):
 
         if options.get('drop', False):
             self.drop_all(Company)
-            #self.drop_all(Activity)
             self.count = 0
 
         self.bulk_create_by(self.companies, options['batch_size'])
@@ -55,11 +54,6 @@ class Command(LoadCommand):
                 obj = Company(**self.serialize(filtered))
                 yield obj
                  
-                #obj.save()
-                #
-                #self.count += 1
-                #self.print_count(Company, count=self.count)
-
     def save_activities(self, row):
         data = dict(
             code=row['main_activity_code'],
