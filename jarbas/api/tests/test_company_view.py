@@ -5,7 +5,7 @@ from django.shortcuts import resolve_url
 from django.test import TestCase
 
 from jarbas.core.models import Company
-from jarbas.core.tests import sample_activity_data, sample_company_data
+from jarbas.core.tests import sample_company_data
 
 
 class TestApi(TestCase):
