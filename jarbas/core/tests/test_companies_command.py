@@ -5,7 +5,7 @@ from unittest.mock import patch
 from django.test import TestCase
 
 from jarbas.core.management.commands.companies import Command
-from jarbas.core.models import Activity, Company
+from jarbas.core.models import Company
 from jarbas.core.tests import sample_company_data
 
 
@@ -46,16 +46,14 @@ class TestCreate(TestCommand):
 
     @patch('jarbas.core.management.commands.companies.lzma')
     @patch('jarbas.core.management.commands.companies.csv.DictReader')
-    @patch('jarbas.core.management.commands.companies.Command.save_activities')
     @patch('jarbas.core.management.commands.companies.Command.serialize')
     @patch('jarbas.core.management.commands.companies.Command.print_count')
     @patch.object(Company.objects, 'create')
-    def test_save_companies(self, create, print_count, serialize, save_activities, rows, lzma):
+    def test_save_companies(self, create, print_count, serialize, rows, lzma):
         self.command.count = 0
         lzma.return_value = StringIO()
         rows.return_value = [sample_company_data]
         serialize.return_value = dict(ahoy=42)
-        save_activities.return_value = ([3], [14, 15])
         self.command.path = 'companies.xz'
         self.command.save_companies()
         create.assert_called_with(ahoy=42)

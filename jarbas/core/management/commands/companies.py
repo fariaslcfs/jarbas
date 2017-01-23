@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 
 from jarbas.core.management.commands import LoadCommand
-from jarbas.core.models import Activity, Company
+from jarbas.core.models import Company
 
 
 class Command(LoadCommand):
@@ -41,18 +41,18 @@ class Command(LoadCommand):
         skip=('main_acvtivity', 'secondary_activity')
         keys = list(f.name for f in Company._meta.fields if f not in skip)
         with lzma.open(self.path, mode='rt') as file_handler:
-            for row in csv.DictReader(file_handler): 
-                main, secondary = self.return_activities(row)
+            for row in csv.DictReader(file_handler):  
+               main, secondary = self.return_activities(row)
+               
+               filtered = {k: v for k, v in row.items() if k in keys}
+               filtered['main_activity'] = [main]
                 
-                filtered = {k: v for k, v in row.items() if k in keys}
-                filtered['main_activity'] = [main]
-                
-                if len(secondary) == 0:
+               if len(secondary) == 0:
                     filtered['secondary_activity'] = []
-                else:
+               else:
                     filtered['secondary_activity'] = [secondary]
-                obj = Company(**self.serialize(filtered))
-                yield obj
+               obj = Company(**self.serialize(filtered))
+               yield obj
                  
     def return_activities(self, row):
         data = dict(
@@ -79,7 +79,7 @@ class Command(LoadCommand):
         decimals = ('latitude', 'longitude')
         for key in decimals:
             row[key] = self.to_number(row[key])
-
+        
         return row
 
     @staticmethod
