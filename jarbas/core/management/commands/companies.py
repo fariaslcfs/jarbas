@@ -13,7 +13,9 @@ class Command(LoadCommand):
     
     def add_arguments(self, parser):
         super().add_arguments(parser)
-        parser.add_argument('--batch-size', '-b', dest='batch_size', type=int, default=10000, help='Number of documents to be created at a time')
+        parser.add_argument('--batch-size', '-b', dest='batch_size', 
+                type=int, default=10000, 
+                help='Number of documents to be created at a time')
 
     def handle(self, *args, **options):
         self.path = options['dataset']
