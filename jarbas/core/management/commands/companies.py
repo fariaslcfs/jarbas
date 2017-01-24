@@ -42,16 +42,31 @@ class Command(LoadCommand):
         keys = list(f.name for f in Company._meta.fields if f not in skip)
         with lzma.open(self.path, mode='rt') as file_handler:
             for row in csv.DictReader(file_handler):  
-               main, secondary = self.return_activities(row)
+               #main, secondary = self.return_activities(row)
                
                filtered = {k: v for k, v in row.items() if k in keys}
+               
+               main = dict(
+                    code=row['main_activity_code'],
+                    description=row['main_activity']
+               )
+               
                filtered['main_activity'] = [main]
-                
+               
+               secondary = {}
+               for num in range(1,100):
+                   code = row.get('secondary_activity_{}_code'.format(num)) 
+                   description = row.get('secondary_activity_{}'.format(num))
+                   if code and description:
+                       secondary[code] = description
+
                if len(secondary) == 0:
                     filtered['secondary_activity'] = []
                else:
                     filtered['secondary_activity'] = [secondary]
+                 
                obj = Company(**self.serialize(filtered))
+               
                yield obj
                  
     def return_activities(self, row):
