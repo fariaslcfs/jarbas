@@ -38,52 +38,41 @@ class Command(LoadCommand):
         Receives path to the dataset file and create a Company object for
         each row of each file. It creates the related activity when needed.
         """
-        skip=('main_acvtivity', 'secondary_activity')
+        skip=('main_activity','secondary_activity')
         keys = list(f.name for f in Company._meta.fields if f not in skip)
+        for num in range(1,100):
+            keys.append('secondary_activity_{}_code'.format(num))
+            keys.append('secondary_activity_{}'.format(num))
         with lzma.open(self.path, mode='rt') as file_handler:
             for row in csv.DictReader(file_handler):  
-               #main, secondary = self.return_activities(row)
-               
                filtered = {k: v for k, v in row.items() if k in keys}
-               
-               main = dict(
-                    code=row['main_activity_code'],
-                    description=row['main_activity']
+               data = dict(
+                       code=row['main_activity_code'],
+                       description=row['main_activity']
                )
-               
-               filtered['main_activity'] = [main]
-               
-               secondary = {}
-               for num in range(1,100):
-                   code = row.get('secondary_activity_{}_code'.format(num)) 
-                   description = row.get('secondary_activity_{}'.format(num))
-                   if code and description:
-                       secondary[code] = description
-
-               if len(secondary) == 0:
-                    filtered['secondary_activity'] = []
-               else:
-                    filtered['secondary_activity'] = [secondary]
-                 
+               filtered['main_activity'] = data
                obj = Company(**self.serialize(filtered))
                
                yield obj
                  
-    def return_activities(self, row):
-        data = dict(
-            code=row['main_activity_code'],
-            description=row['main_activity']
-        )
-
+    def serialize_activities(self, row):
         secondaries = {}
         for num in range(1, 100):
             code = row.get('secondary_activity_{}_code'.format(num))
             description = row.get('secondary_activity_{}'.format(num))
             if code and description:
                 secondaries[code] = description
+        
+        if len(secondaries) == 0:
+            row['secondary_activity'] = []
+        else:
+            row['secondary_activity'] = [secondaries]
 
-        return data, secondaries
-
+        for num in range(1,100):
+            row.pop('secondary_activity_{}_code'.format(num), None)
+            row.pop('secondary_activity_{}'.format(num), None)
+        
+        
     def serialize(self, row):
         row['email'] = self.to_email(row['email'])
 
@@ -95,6 +84,8 @@ class Command(LoadCommand):
         for key in decimals:
             row[key] = self.to_number(row[key])
         
+        self.serialize_activities(row)
+
         return row
 
     @staticmethod
