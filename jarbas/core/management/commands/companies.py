@@ -1,6 +1,7 @@
 import csv
 import lzma
 import re
+from functools import partial
 
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
@@ -11,12 +12,14 @@ from jarbas.core.models import Company
 
 class Command(LoadCommand):
     help = 'Load Serenata de Amor companies dataset into the database'
-    
+
     def add_arguments(self, parser):
         super().add_arguments(parser)
-        parser.add_argument('--batch-size', '-b', dest='batch_size', 
-                type=int, default=10000, 
-                help='Number of documents to be created at a time')
+        parser.add_argument(
+            '--batch-size', '-b', dest='batch_size',
+            type=int, default=10000,
+            help='Number of companies to be created at a time'
+        )
 
     def handle(self, *args, **options):
         self.path = options['dataset']
@@ -28,8 +31,7 @@ class Command(LoadCommand):
             self.count = 0
 
         self.bulk_create_by(self.companies, options['batch_size'])
-    
-    
+
     def save_companies(self):
         self.bulk_create_by(self.companies, 10000)
 
@@ -40,23 +42,23 @@ class Command(LoadCommand):
         each row of each file. It creates the related activity when needed.
         """
         model_fields = list(f.name for f in Company._meta.fields)
+        is_valid = partial(self.is_valid, model_fields)
         with lzma.open(self.path, mode='rt') as file_handler:
-            for row in csv.DictReader(file_handler):  
-               keys = list(filter(lambda x: self.is_valid(x, model_fields),
-                            row.keys()))  
-               filtered = {k: v for k, v in row.items() if k in keys}
-               obj = Company(**self.serialize(filtered))
-               
-               yield obj
-                 
+            for row in csv.DictReader(file_handler):
+                keys = filter(is_valid, row.keys())
+                filtered = {k: v for k, v in row.items() if k in keys}
+                obj = Company(**self.serialize(filtered))
+
+                yield obj
+
     def serialize_activities(self, row):
         row['main_activity'] = dict(
             code=row.get('main_activity_code'),
             description=row.get('main_activity')
-            )
+        )
         del(row['main_activity_code'])
-         
-        secondaries = [] 
+
+        secondaries = []
         for num in range(1, 100):
             code = row.get('secondary_activity_{}_code'.format(num))
             description = row.get('secondary_activity_{}'.format(num))
@@ -65,7 +67,7 @@ class Command(LoadCommand):
             if code and description:
                 data = dict(code=code, description=description)
                 secondaries.append(data)
-            
+
             row['secondary_activity'] = secondaries
 
         return row
@@ -80,7 +82,7 @@ class Command(LoadCommand):
         decimals = ('latitude', 'longitude')
         for key in decimals:
             row[key] = self.to_number(row[key])
-        
+
         row = self.serialize_activities(row)
 
         return row
@@ -105,15 +107,15 @@ class Command(LoadCommand):
                 batch = list()
         Company.objects.bulk_create(batch)
 
-    def is_valid(self, field, keys):
-        if field == 'secondary_activity':  
+    def is_valid(self, fields, field):
+        if field == 'secondary_activity':
             return False
 
-        if field == 'main_activity_code':  
+        if field == 'main_activity_code':
             return True
 
-        if field in keys:
+        if field in fields:
             return True
 
         regex = re.compile(r'secondary_activity_([\d]{1,2})(_code)?')
-        return bool(regex.match(field)) 
+        return bool(regex.match(field))
