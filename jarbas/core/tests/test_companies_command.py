@@ -43,7 +43,7 @@ class TestSerializer(TestCommand):
             'special_situation_date': date(1969, 12, 31),
             'latitude': 3.1415,
             'longitude': -42.0,
-            'main_activity': {'code': 1001, 'description': 'Main Act.'}
+            'main_activity': [{'code': 1001, 'description': 'Main Act.'}]
         }
         expected['secondary_activity'] = [
             {'code': i, 'description': 'Act. {}'.format(i)}

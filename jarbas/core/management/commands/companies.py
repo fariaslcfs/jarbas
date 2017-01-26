@@ -1,6 +1,7 @@
 import csv
 import lzma
-import re
+from functools import partial
+from re import compile
 
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
@@ -45,24 +46,27 @@ class Command(LoadCommand):
 
                 yield obj
 
+    @staticmethod
+    def serialize_activity(row, key):
+        if isinstance(key, int):
+            key = 'secondary_activity_{}'.format(key)
+
+        description = row.get(key)
+        code = row.get('{}_code'.format(key))
+        if code:
+            code = int(code)
+
+        return dict(code=code, description=description)
+
     def serialize_activities(self, row):
-        row['main_activity'] = dict(
-            code=int(row.get('main_activity_code', 0)),
-            description=row.get('main_activity')
-        )
-        del(row['main_activity_code'])
+        activity_from = partial(self.serialize_activity, row)
+        row['main_activity'] = [activity_from('main_activity')]
+        row['secondary_activity'] = [activity_from(i) for i in range(1, 100)]
 
-        secondaries = []
-        for num in range(1, 100):
-            code = int(row.get('secondary_activity_{}_code'.format(num), 0))
-            description = row.get('secondary_activity_{}'.format(num))
-            del(row['secondary_activity_{}_code'.format(num)])
-            del(row['secondary_activity_{}'.format(num)])
-            if code and description:
-                data = dict(code=code, description=description)
-                secondaries.append(data)
-
-            row['secondary_activity'] = secondaries
+        rx = compile(r'^(main|secondary)(_activity_)(([\d]+)|(code))(_code)?$')
+        cleanup = [k for k in row.keys() if rx.match(k)]
+        for key in cleanup:
+            del row[key]
 
         return row
 
@@ -77,9 +81,7 @@ class Command(LoadCommand):
         for key in decimals:
             row[key] = self.to_number(row[key])
 
-        row = self.serialize_activities(row)
-
-        return row
+        return self.serialize_activities(row)
 
     @staticmethod
     def to_email(email):
@@ -114,5 +116,5 @@ class Command(LoadCommand):
         if field in (f.name for f in Company._meta.fields):
             return True
 
-        regex = re.compile(r'^secondary_activity_([\d]{1,2})(_code)?$')
+        regex = compile(r'^secondary_activity_([\d]{1,2})(_code)?$')
         return bool(regex.match(field))
