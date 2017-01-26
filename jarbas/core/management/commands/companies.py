@@ -1,5 +1,6 @@
 import csv
 import lzma
+import re
 
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
@@ -38,24 +39,21 @@ class Command(LoadCommand):
         Receives path to the dataset file and create a Company object for
         each row of each file. It creates the related activity when needed.
         """
-        skip=('main_activity','secondary_activity')
-        keys = list(f.name for f in Company._meta.fields if f not in skip)
-        for num in range(1,100):
-            keys.append('secondary_activity_{}_code'.format(num))
-            keys.append('secondary_activity_{}'.format(num))
         with lzma.open(self.path, mode='rt') as file_handler:
             for row in csv.DictReader(file_handler):  
+               keys = list(filter(self.is_valid, row.keys()))  
                filtered = {k: v for k, v in row.items() if k in keys}
-               data = dict(
-                       code=row['main_activity_code'],
-                       description=row['main_activity']
-               )
-               filtered['main_activity'] = data
                obj = Company(**self.serialize(filtered))
                
                yield obj
                  
     def serialize_activities(self, row):
+        row['main_activity'] = dict(
+            code=row.get('main_activity_code'),
+            description=row.get('main_activity')
+            )
+        del(row['main_activity_code'])
+         
         secondaries = [] 
         for num in range(1, 100):
             code = row.get('secondary_activity_{}_code'.format(num))
@@ -65,7 +63,9 @@ class Command(LoadCommand):
             if code and description:
                 data = dict(code=code, description=description)
                 secondaries.append(data)
-        
+            
+            row['secondary_activity'] = secondaries
+
         return row
 
     def serialize(self, row):
@@ -79,7 +79,7 @@ class Command(LoadCommand):
         for key in decimals:
             row[key] = self.to_number(row[key])
         
-        self.serialize_activities(row)
+        row = self.serialize_activities(row)
 
         return row
 
@@ -102,3 +102,16 @@ class Command(LoadCommand):
                 self.print_count(Company, count=self.count)
                 batch = list()
         Company.objects.bulk_create(batch)
+
+    def is_valid(self, field):
+        if field == 'secondary_activity':  
+            return False
+
+        if field == 'main_activity_code':  
+            return True
+    
+        if field in list(f.name for f in Company._meta.fields):
+            return True
+
+        regex = re.compile(r'secondary_activity_([\d]{1,2})(_code)?')
+        return bool(regex.match(field)) 
