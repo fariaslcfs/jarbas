@@ -40,7 +40,7 @@ class Command(LoadCommand):
         """
         with lzma.open(self.path, mode='rt') as file_handler:
             for row in csv.DictReader(file_handler):
-                keys = filter(self.is_valid, row.keys())
+                keys = list(filter(self.is_valid, row.keys()))
                 filtered = {k: v for k, v in row.items() if k in keys}
                 obj = Company(**self.serialize(filtered))
 
