@@ -51,12 +51,10 @@ class Command(LoadCommand):
         if isinstance(key, int):
             key = 'secondary_activity_{}'.format(key)
 
-        description = row.get(key)
-        code = row.get('{}_code'.format(key))
-        if code:
-            code = int(code)
-
-        return dict(code=code, description=description)
+        return dict(
+            code=row.get('{}_code'.format(key)),
+            description=row.get(key)
+        )
 
     def serialize_activities(self, row):
         activity_from = partial(self.serialize_activity, row)
