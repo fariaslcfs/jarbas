@@ -1,7 +1,6 @@
 import csv
 import lzma
 import re
-from functools import partial
 
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
@@ -38,11 +37,9 @@ class Command(LoadCommand):
         Receives path to the dataset file and create a Company object for
         each row of each file. It creates the related activity when needed.
         """
-        model_fields = list(f.name for f in Company._meta.fields)
-        is_valid = partial(self.is_valid, model_fields)
         with lzma.open(self.path, mode='rt') as file_handler:
             for row in csv.DictReader(file_handler):
-                keys = filter(is_valid, row.keys())
+                keys = filter(self.is_valid, row.keys())
                 filtered = {k: v for k, v in row.items() if k in keys}
                 obj = Company(**self.serialize(filtered))
 
@@ -107,15 +104,15 @@ class Command(LoadCommand):
         self.count += len(batch)
         self.print_count(Company, count=self.count)
 
-    def is_valid(self, fields, field):
+    def is_valid(self, field):
         if field == 'secondary_activity':
             return False
 
         if field == 'main_activity_code':
             return True
 
-        if field in fields:
+        if field in (f.name for f in Company._meta.fields):
             return True
 
-        regex = re.compile(r'secondary_activity_([\d]{1,2})(_code)?')
+        regex = re.compile(r'^secondary_activity_([\d]{1,2})(_code)?$')
         return bool(regex.match(field))

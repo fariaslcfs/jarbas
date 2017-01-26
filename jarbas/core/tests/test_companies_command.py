@@ -6,7 +6,6 @@ from django.test import TestCase
 
 from jarbas.core.management.commands.companies import Command
 from jarbas.core.models import Company
-from jarbas.core.tests import sample_company_data
 
 
 class TestCommand(TestCase):
@@ -57,7 +56,7 @@ class TestCreate(TestCommand):
 
     @patch('jarbas.core.management.commands.companies.Command.bulk_create')
     def test_bulk_create_by(self, bulk_create):
-        self.command.bulk_create_by(range(0,10), 4)
+        self.command.bulk_create_by(range(0, 10), 4)
         bulk_create.assert_has_calls((
             call([0, 1, 2, 3]),
             call([4, 5, 6, 7]),
@@ -104,3 +103,27 @@ class TestConventionMethods(TestCommand):
         parser = MagicMock()
         self.command.add_arguments(parser)
         self.assertEqual(3, parser.add_argument.call_count)
+
+
+class TestCustomMethods(TestCommand):
+
+    def test_is_valid(self):
+        expects_true = (
+            'main_activity_code',
+            'cnpj',
+            'trade_name',
+            'secondary_activity_42',
+            'secondary_activity_42_code'
+        )
+        expects_false = (
+            'secondary_activity',
+            'secondary_activity_100',
+            'secondary_activity_100_code',
+            'ahoy'
+        )
+        for value in expects_true:
+            with self.subTest():
+                self.assertTrue(self.command.is_valid(value), value)
+        for value in expects_false:
+            with self.subTest():
+                self.assertFalse(self.command.is_valid(value), value)
