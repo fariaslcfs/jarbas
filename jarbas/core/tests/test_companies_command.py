@@ -5,7 +5,7 @@ from unittest.mock import patch
 from django.test import TestCase
 
 from jarbas.core.management.commands.companies import Command
-from jarbas.core.models import Activity, Company
+from jarbas.core.models import Company
 from jarbas.core.tests import sample_company_data
 
 
@@ -44,41 +44,19 @@ class TestSerializer(TestCommand):
 
 class TestCreate(TestCommand):
 
-    @patch.object(Activity.objects, 'update_or_create')
-    def test_save_activities(self, update_or_create):
-        company = {
-            'main_activity_code': '42',
-            'main_activity': 'Ahoy'
-        }
-        for num in range(1, 100):
-            company['secondary_activity_{}_code'.format(num)] = 100 + num
-            company['secondary_activity_{}'.format(num)] = str(num)
-
-        main, secondaries = self.command.save_activities(company)
-        self.assertEqual(100, update_or_create.call_count)
-        self.assertIsInstance(main, list)
-        self.assertIsInstance(secondaries, list)
-        self.assertEqual(1, len(main))
-        self.assertEqual(99, len(secondaries))
-
     @patch('jarbas.core.management.commands.companies.lzma')
     @patch('jarbas.core.management.commands.companies.csv.DictReader')
-    @patch('jarbas.core.management.commands.companies.Command.save_activities')
     @patch('jarbas.core.management.commands.companies.Command.serialize')
     @patch('jarbas.core.management.commands.companies.Command.print_count')
     @patch.object(Company.objects, 'create')
-    def test_save_companies(self, create, print_count, serialize, save_activities, rows, lzma):
+    def test_save_companies(self, create, print_count, serialize, rows, lzma):
         self.command.count = 0
         lzma.return_value = StringIO()
         rows.return_value = [sample_company_data]
         serialize.return_value = dict(ahoy=42)
-        save_activities.return_value = ([3], [14, 15])
         self.command.path = 'companies.xz'
         self.command.save_companies()
         create.assert_called_with(ahoy=42)
-        create.return_value.main_activity.add.assert_called_with(3)
-        self.assertEqual(2, create.return_value.secondary_activity.add.call_count)
-
 
 class TestConventionMethods(TestCommand):
 
@@ -88,7 +66,7 @@ class TestConventionMethods(TestCommand):
     @patch('jarbas.core.management.commands.companies.Command.print_count')
     def test_handler_without_options(self, print_count, save_companies, drop_all, print_):
         print_count.return_value = 0
-        self.command.handle(dataset='companies.xz')
+        self.command.handle(dataset='companies.xz', batch_size=42)
         print_.assert_called_with('Starting with 0 companies')
         self.assertEqual(1, save_companies.call_count)
         self.assertEqual(1, print_count.call_count)
@@ -101,7 +79,7 @@ class TestConventionMethods(TestCommand):
     @patch('jarbas.core.management.commands.companies.Command.print_count')
     def test_handler_with_options(self, print_count, save_companies, drop_all, print_):
         print_count.return_value = 0
-        self.command.handle(dataset='companies.xz', drop=True)
+        self.command.handle(dataset='companies.xz',batch_size=42,drop=True)
         print_.assert_called_with('Starting with 0 companies')
         self.assertEqual(2, drop_all.call_count)
         self.assertEqual(1, save_companies.call_count)
