@@ -39,9 +39,11 @@ class Command(LoadCommand):
         Receives path to the dataset file and create a Company object for
         each row of each file. It creates the related activity when needed.
         """
+        model_fields = list(f.name for f in Company._meta.fields)
         with lzma.open(self.path, mode='rt') as file_handler:
             for row in csv.DictReader(file_handler):  
-               keys = list(filter(self.is_valid, row.keys()))  
+               keys = list(filter(lambda x: self.is_valid(x, model_fields),
+                            row.keys()))  
                filtered = {k: v for k, v in row.items() if k in keys}
                obj = Company(**self.serialize(filtered))
                
@@ -103,14 +105,14 @@ class Command(LoadCommand):
                 batch = list()
         Company.objects.bulk_create(batch)
 
-    def is_valid(self, field):
+    def is_valid(self, field, keys):
         if field == 'secondary_activity':  
             return False
 
         if field == 'main_activity_code':  
             return True
-    
-        if field in list(f.name for f in Company._meta.fields):
+
+        if field in keys:
             return True
 
         regex = re.compile(r'secondary_activity_([\d]{1,2})(_code)?')
