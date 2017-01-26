@@ -1,6 +1,6 @@
 from datetime import date
 from io import StringIO
-from unittest.mock import call, patch
+from unittest.mock import MagicMock, call, patch
 
 from django.test import TestCase
 
@@ -99,3 +99,8 @@ class TestConventionMethods(TestCommand):
         print_.assert_called_with('Starting with 0 companies')
         self.assertEqual(1, drop_all.call_count)
         self.assertEqual(1, bulk_create_by.call_count)
+
+    def test_add_arguments(self):
+        parser = MagicMock()
+        self.command.add_arguments(parser)
+        self.assertEqual(3, parser.add_argument.call_count)
