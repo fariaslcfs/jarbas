@@ -40,7 +40,7 @@ class Command(LoadCommand):
         """
         with lzma.open(self.path, mode='rt') as file_handler:
             for row in csv.DictReader(file_handler):
-                keys = filter(self.is_valid, row.keys())
+                keys = list(filter(self.is_valid, row.keys()))
                 filtered = {k: v for k, v in row.items() if k in keys}
                 obj = Company(**self.serialize(filtered))
 
@@ -51,12 +51,10 @@ class Command(LoadCommand):
         if isinstance(key, int):
             key = 'secondary_activity_{}'.format(key)
 
-        description = row.get(key)
-        code = row.get('{}_code'.format(key))
-        if code:
-            code = int(code)
-
-        return dict(code=code, description=description)
+        return dict(
+            code=row.get('{}_code'.format(key)),
+            description=row.get(key)
+        )
 
     def serialize_activities(self, row):
         activity_from = partial(self.serialize_activity, row)
@@ -100,6 +98,7 @@ class Command(LoadCommand):
                 self.bulk_create(batch)
                 batch = list()
         self.bulk_create(batch)
+        self.print_count(Company, count=self.count, permanent=True)
 
     def bulk_create(self, batch):
         Company.objects.bulk_create(batch)

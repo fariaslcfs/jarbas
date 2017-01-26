@@ -153,6 +153,7 @@ class Company(models.Model):
     special_situation = models.CharField('Special situation', blank=True, null=True, max_length=51)
     special_situation_date = models.DateField('Special situation date', blank=True, null=True)
     responsible_federative_entity = models.CharField('Responsible federative entity', blank=True, null=True, max_length=38)
+    message = models.CharField('Message', max_length=140, blank=True, null=True)
 
     address = models.CharField('Address', blank=True, null=True, max_length=64)
     number = models.CharField('Number', blank=True, null=True, max_length=6)
