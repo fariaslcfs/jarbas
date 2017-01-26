@@ -68,7 +68,7 @@ class TestCreate(TestCommand):
     @patch('jarbas.core.management.commands.companies.Command.print_count')
     def test_bulk_create(self, print_count, bulk_create):
         self.command.count = 0
-        self.command.bulk_create(list(range(0,3)))
+        self.command.bulk_create(list(range(0, 3)))
         bulk_create.assert_called_once_with([0, 1, 2])
         print_count.assert_called_once_with(Company, count=3)
         self.assertEqual(3, self.command.count)
@@ -95,7 +95,7 @@ class TestConventionMethods(TestCommand):
     @patch('jarbas.core.management.commands.companies.Command.print_count')
     def test_handler_with_options(self, print_count, bulk_create_by, drop_all, print_):
         print_count.return_value = 0
-        self.command.handle(dataset='companies.xz',batch_size=42,drop=True)
+        self.command.handle(dataset='companies.xz', batch_size=42, drop=True)
         print_.assert_called_with('Starting with 0 companies')
         self.assertEqual(1, drop_all.call_count)
         self.assertEqual(1, bulk_create_by.call_count)
