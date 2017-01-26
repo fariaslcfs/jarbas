@@ -53,14 +53,14 @@ class Command(LoadCommand):
 
     def serialize_activities(self, row):
         row['main_activity'] = dict(
-            code=row.get('main_activity_code'),
+            code=int(row.get('main_activity_code', 0)),
             description=row.get('main_activity')
         )
         del(row['main_activity_code'])
 
         secondaries = []
         for num in range(1, 100):
-            code = row.get('secondary_activity_{}_code'.format(num))
+            code = int(row.get('secondary_activity_{}_code'.format(num), 0))
             description = row.get('secondary_activity_{}'.format(num))
             del(row['secondary_activity_{}_code'.format(num)])
             del(row['secondary_activity_{}'.format(num)])
