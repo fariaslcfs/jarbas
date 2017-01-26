@@ -23,22 +23,33 @@ class TestSerializer(TestCommand):
         self.assertEqual(self.command.to_email('jane@example.com'), expected)
 
     def test_serializer(self):
+        self.maxDiff = 2 ** 16
         company = {
             'email': 'ahoy',
             'opening': '31/12/1969',
             'situation_date': '31/12/1969',
             'special_situation_date': '31/12/1969',
             'latitude': '3.1415',
-            'longitude': '-42'
+            'longitude': '-42',
+            'main_activity': 'Main Act.',
+            'main_activity_code': 1001
         }
+        for i in range(1, 100):
+            company['secondary_activity_{}'.format(i)] = 'Act. {}'.format(i)
+            company['secondary_activity_{}_code'.format(i)] = str(i)
         expected = {
             'email': None,
             'opening': date(1969, 12, 31),
             'situation_date': date(1969, 12, 31),
             'special_situation_date': date(1969, 12, 31),
             'latitude': 3.1415,
-            'longitude': -42.0
+            'longitude': -42.0,
+            'main_activity': {'code': 1001, 'description': 'Main Act.'}
         }
+        expected['secondary_activity'] = [
+            {'code': i, 'description': 'Act. {}'.format(i)}
+            for i in range(1, 100)
+        ]
         self.assertEqual(self.command.serialize(company), expected)
 
 
