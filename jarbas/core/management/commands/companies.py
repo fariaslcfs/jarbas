@@ -98,6 +98,7 @@ class Command(LoadCommand):
                 self.bulk_create(batch)
                 batch = list()
         self.bulk_create(batch)
+        self.print_count(Company, count=self.count, permanent=True)
 
     def bulk_create(self, batch):
         Company.objects.bulk_create(batch)
