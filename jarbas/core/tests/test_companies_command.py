@@ -127,3 +127,17 @@ class TestCustomMethods(TestCommand):
         for value in expects_false:
             with self.subTest():
                 self.assertFalse(self.command.is_valid(value), value)
+
+
+class TestFileLoader(TestCommand):
+
+    @patch('jarbas.core.management.commands.companies.lzma')
+    @patch('jarbas.core.management.commands.companies.csv.DictReader')
+    @patch('jarbas.core.management.commands.companies.Company')
+    @patch('jarbas.core.management.commands.companies.Command.serialize')
+    def test_reimbursement_property(self, serializer, company, row, lzma):
+        lzma.return_value = StringIO()
+        row.return_value = [dict(main_activity='ahoy')]
+        self.command.path = 'companies.xz'
+        list(self.command.companies)
+        self.assertEqual(1, company.call_count)
