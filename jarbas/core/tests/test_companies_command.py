@@ -53,44 +53,28 @@ class TestSerializer(TestCommand):
         self.assertEqual(self.command.serialize(company), expected)
 
 
-class TestCreate(TestCommand):
-
-    @patch('jarbas.core.management.commands.companies.lzma')
-    @patch('jarbas.core.management.commands.companies.csv.DictReader')
-    @patch('jarbas.core.management.commands.companies.Command.serialize')
-    @patch('jarbas.core.management.commands.companies.Command.print_count')
-    @patch.object(Company.objects, 'create')
-    def test_save_companies(self, create, print_count, serialize, rows, lzma):
-        self.command.count = 0
-        lzma.return_value = StringIO()
-        rows.return_value = [sample_company_data]
-        serialize.return_value = dict(ahoy=42)
-        self.command.path = 'companies.xz'
-        self.command.save_companies()
-        create.assert_called_with(ahoy=42)
-
 class TestConventionMethods(TestCommand):
 
     @patch('jarbas.core.management.commands.companies.print')
     @patch('jarbas.core.management.commands.companies.LoadCommand.drop_all')
-    @patch('jarbas.core.management.commands.companies.Command.save_companies')
+    @patch('jarbas.core.management.commands.companies.Command.bulk_create_by')
     @patch('jarbas.core.management.commands.companies.Command.print_count')
-    def test_handler_without_options(self, print_count, save_companies, drop_all, print_):
+    def test_handler_without_options(self, print_count, bulk_create_by, drop_all, print_):
         print_count.return_value = 0
         self.command.handle(dataset='companies.xz', batch_size=42)
         print_.assert_called_with('Starting with 0 companies')
-        self.assertEqual(1, save_companies.call_count)
+        self.assertEqual(1, bulk_create_by.call_count)
         self.assertEqual(1, print_count.call_count)
         self.assertEqual('companies.xz', self.command.path)
         drop_all.assert_not_called()
 
     @patch('jarbas.core.management.commands.companies.print')
     @patch('jarbas.core.management.commands.companies.Command.drop_all')
-    @patch('jarbas.core.management.commands.companies.Command.save_companies')
+    @patch('jarbas.core.management.commands.companies.Command.bulk_create_by')
     @patch('jarbas.core.management.commands.companies.Command.print_count')
-    def test_handler_with_options(self, print_count, save_companies, drop_all, print_):
+    def test_handler_with_options(self, print_count, bulk_create_by, drop_all, print_):
         print_count.return_value = 0
         self.command.handle(dataset='companies.xz',batch_size=42,drop=True)
         print_.assert_called_with('Starting with 0 companies')
         self.assertEqual(2, drop_all.call_count)
-        self.assertEqual(1, save_companies.call_count)
+        self.assertEqual(1, bulk_create_by.call_count)

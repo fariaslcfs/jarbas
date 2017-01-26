@@ -32,9 +32,6 @@ class Command(LoadCommand):
 
         self.bulk_create_by(self.companies, options['batch_size'])
 
-    def save_companies(self):
-        self.bulk_create_by(self.companies, 10000)
-
     @property
     def companies(self):
         """
