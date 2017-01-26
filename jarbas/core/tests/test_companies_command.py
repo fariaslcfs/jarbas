@@ -97,5 +97,5 @@ class TestConventionMethods(TestCommand):
         print_count.return_value = 0
         self.command.handle(dataset='companies.xz',batch_size=42,drop=True)
         print_.assert_called_with('Starting with 0 companies')
-        self.assertEqual(2, drop_all.call_count)
+        self.assertEqual(1, drop_all.call_count)
         self.assertEqual(1, bulk_create_by.call_count)
