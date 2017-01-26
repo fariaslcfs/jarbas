@@ -98,11 +98,14 @@ class Command(LoadCommand):
         for company in companies:
             batch.append(company)
             if len(batch) == size:
-                Company.objects.bulk_create(batch)
-                self.count += len(batch)
-                self.print_count(Company, count=self.count)
+                self.bulk_create(batch)
                 batch = list()
+        self.bulk_create(batch)
+
+    def bulk_create(self, batch):
         Company.objects.bulk_create(batch)
+        self.count += len(batch)
+        self.print_count(Company, count=self.count)
 
     def is_valid(self, fields, field):
         if field == 'secondary_activity':

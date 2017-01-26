@@ -1,6 +1,6 @@
 from datetime import date
 from io import StringIO
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 from django.test import TestCase
 
@@ -51,6 +51,27 @@ class TestSerializer(TestCommand):
             for i in range(1, 100)
         ]
         self.assertEqual(self.command.serialize(company), expected)
+
+
+class TestCreate(TestCommand):
+
+    @patch('jarbas.core.management.commands.companies.Command.bulk_create')
+    def test_bulk_create_by(self, bulk_create):
+        self.command.bulk_create_by(range(0,10), 4)
+        bulk_create.assert_has_calls((
+            call([0, 1, 2, 3]),
+            call([4, 5, 6, 7]),
+            call([8, 9])
+        ))
+
+    @patch.object(Company.objects, 'bulk_create')
+    @patch('jarbas.core.management.commands.companies.Command.print_count')
+    def test_bulk_create(self, print_count, bulk_create):
+        self.command.count = 0
+        self.command.bulk_create(list(range(0,3)))
+        bulk_create.assert_called_once_with([0, 1, 2])
+        print_count.assert_called_once_with(Company, count=3)
+        self.assertEqual(3, self.command.count)
 
 
 class TestConventionMethods(TestCommand):
