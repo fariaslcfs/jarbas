@@ -56,23 +56,18 @@ class Command(LoadCommand):
                yield obj
                  
     def serialize_activities(self, row):
-        secondaries = {}
+        secondaries = [] 
         for num in range(1, 100):
             code = row.get('secondary_activity_{}_code'.format(num))
             description = row.get('secondary_activity_{}'.format(num))
+            del(row['secondary_activity_{}_code'.format(num)])
+            del(row['secondary_activity_{}'.format(num)])
             if code and description:
-                secondaries[code] = description
+                data = dict(code=code, description=description)
+                secondaries.append(data)
         
-        if len(secondaries) == 0:
-            row['secondary_activity'] = []
-        else:
-            row['secondary_activity'] = [secondaries]
+        return row
 
-        for num in range(1,100):
-            row.pop('secondary_activity_{}_code'.format(num), None)
-            row.pop('secondary_activity_{}'.format(num), None)
-        
-        
     def serialize(self, row):
         row['email'] = self.to_email(row['email'])
 
