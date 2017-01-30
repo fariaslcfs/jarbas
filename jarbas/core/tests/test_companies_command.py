@@ -55,8 +55,10 @@ class TestSerializer(TestCommand):
 
 class TestCreate(TestCommand):
 
+    @patch('jarbas.core.management.commands.companies.Command.print_count')
     @patch('jarbas.core.management.commands.companies.Command.bulk_create')
-    def test_bulk_create_by(self, bulk_create):
+    def test_bulk_create_by(self, bulk_create, print_count):
+        self.command.count = 0
         self.command.bulk_create_by(range(0, 10), 4)
         bulk_create.assert_has_calls((
             call([0, 1, 2, 3]),
