@@ -51,15 +51,21 @@ class Command(LoadCommand):
         if isinstance(key, int):
             key = 'secondary_activity_{}'.format(key)
 
-        return dict(
+        activity = dict(
             code=row.get('{}_code'.format(key)),
             description=row.get(key)
         )
 
+        if any(activity.values()):
+            return activity
+
     def serialize_activities(self, row):
         activity_from = partial(self.serialize_activity, row)
-        row['main_activity'] = [activity_from('main_activity')]
-        row['secondary_activity'] = [activity_from(i) for i in range(1, 100)]
+        main = [activity_from('main_activity')]
+        secondary = [activity_from(i) for i in range(1, 100)]
+
+        row['main_activity'] = [a for a in main if a is not None]
+        row['secondary_activity'] = [a for a in secondary if a is not None]
 
         rx = compile(r'^(main|secondary)(_activity_)(([\d]+)|(code))(_code)?$')
         cleanup = [k for k in row.keys() if rx.match(k)]

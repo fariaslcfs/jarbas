@@ -9,45 +9,60 @@ from tqdm import tqdm
 
 
 def to_json(activity):
-    return dict(code=activity.code, description=activity.description)
+    if activity.code or activity.description:
+        return dict(code=activity.code, description=activity.description)
 
 
 def to_relational(apps, activity):
-    Activity = apps.get_model('core', 'Activity')
-    return Activity.objects.get_or_create(**activity, defaults=activity)
+    if any((activity.get('code'), activity.get('description'))):
+        Activity = apps.get_model('core', 'Activity')
+        return Activity.objects.get_or_create(**activity, defaults=activity)
 
 
 def forward_activity_to_json(apps, schema_editor):
     Company = apps.get_model('core', 'Company')
     total = Company.objects.count()
+
     if total:
         queue = list()
         for company in tqdm(Company.objects.all(), total=total):
             main = [to_json(a) for a in company.main_activity.all()]
+            company.json_main_activity = [a for a in main if a is not None]
+
             sec = [to_json(a) for a in company.secondary_activity.all()]
-            company.json_main_activity = main
-            company.json_secondary_activity = sec
+            company.json_secondary_activity = [a for a in sec if a is not None]
+
             queue.append(company)
             if len(queue) == 1000:
                 bulk_update(queue)
                 queue = list()
+
         bulk_update(queue)
 
 
 def backward_activity_to_json(apps, schema_editor):
     Company = apps.get_model('core', 'Company')
     total = Company.objects.count()
+
     if total:
         queue = list()
         for company in tqdm(Company.objects.all(), total=total):
+
             for activity in company.json_main_activity:
-                company.main_activity.add(to_relational(apps, activity))
+                obj = to_relational(apps, activity)
+                if obj:
+                    company.main_activity.add(obj)
+
             for activity in company.json_secondary_activity:
-                company.secondary_activity.add(to_relational(apps, activity))
+                obj = to_relational(apps, activity)
+                if obj:
+                    company.secondary_activity.add(obj)
+
             queue.append(company)
             if len(queue) == 1000:
                 bulk_update(queue)
                 queue = list()
+
         bulk_update(queue)
 
 
