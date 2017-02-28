@@ -92,6 +92,6 @@ class Command(LoadCommand):
 
     @staticmethod
     def bool(string):
-        if string.lower() in ('false', '0', '0.0', 'none', 'nil', 'null'):
+        if string.lower() in ('false', '0', '0.0', '1', 'none', 'nil', 'null'):
             string = ''
         return bool(string)
